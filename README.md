@@ -212,6 +212,13 @@ Add these variables to your host's app settings:
   </dd>
 </dl>
 <dl>
+  <dt>SOLID_QUEUE_IN_PUMA</dt>
+  <dd>
+    Ignore if using the web server to run jobs. If using a separate runner, set
+    to `false`. Default is enabled
+  </dd>
+</dl>
+<dl>
   <dt>USER_REGISTRATION</dt>
   <dd>
     Set to <code>enabled</code> to allow public registration. Default is disabled so not required if invite only.
