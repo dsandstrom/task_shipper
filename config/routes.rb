@@ -203,10 +203,13 @@ Rails.application.routes.draw do
   # How-To:-Allow-users-to-edit-their-password
   # devise already adds /auth, so full path is /auth/auth/github/callback
   # Example: https://your-url.tld/auth/auth/github/callback
-  devise_for :users,
-             path: 'auth', skip: :registrations,
-             controllers: { confirmations: 'users/confirmations',
-                            omniauth_callbacks: 'users/omniauth_callbacks' }
+  devise_controllers = { confirmations: 'users/confirmations' }
+  if Rails.application.config.devise.omniauth_providers&.any?
+    devise_controllers.merge!(omniauth_callbacks: 'users/omniauth_callbacks')
+  end
+
+  devise_for :users, path: 'auth', skip: :registrations,
+                     controllers: devise_controllers
   devise_scope :user do
     get 'auth/sign_up' => 'users/registrations#new', as: :new_user_registration
     post 'auth' => 'users/registrations#create', as: :user_registrations

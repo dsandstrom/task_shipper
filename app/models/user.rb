@@ -4,8 +4,11 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
   # Include default devise modules. Others available are:
   #    :timeoutable
   devise :confirmable, :database_authenticatable, :lockable, :recoverable,
-         :registerable, :rememberable, :trackable, :validatable, :omniauthable,
-         omniauth_providers: %i[github]
+         :registerable, :rememberable, :trackable, :validatable
+  if Rails.application.config.devise.omniauth_providers&.any?
+    devise :omniauthable, omniauth_providers: %i[github]
+  end
+
   VALID_EMPLOYEE_TYPES = %w[Admin Reviewer Worker Reporter].freeze
   ASSIGNABLE_EMPLOYEE_TYPES = %w[Reviewer Worker].freeze
   NAME_DISALLOW_REGEX = %r{(https?:/|&#?\w+;|#{Unicode::Emoji::REGEX})}
