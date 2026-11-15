@@ -4,8 +4,6 @@
 # https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
 # https://docs.github.com/en/rest/reference/repos#commits
 
-# test comment
-
 module Api
   module V1
     class WebhooksController < ActionController::API
