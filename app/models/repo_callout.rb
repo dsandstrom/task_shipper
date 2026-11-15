@@ -1,3 +1,4 @@
+# test comment
 class RepoCallout < ApplicationRecord
   ACTION_OPTIONS = %w[start pause complete].freeze
   MESSAGE_REGEX = /
