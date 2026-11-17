@@ -24,11 +24,9 @@
           <%= render 'github_accounts/github_account',
                      github_account: github_account %>
         <% elsif can?(:create, github_account) %>
-          <%= link_to 'Connect GitHub',
-                      user_github_omniauth_authorize_path,
-                      method: :post,
-                      class: 'button button-outline',
-                      data: { turbo_method: :post } %>
+          <%= button_to 'Connect GitHub', user_github_omniauth_authorize_path,
+                        class: 'button button-outline',
+                        data: { turbo: false } %>
         <% else %>
           <p><em>No connection yet</em></p>
         <% end %>
