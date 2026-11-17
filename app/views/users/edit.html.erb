@@ -10,26 +10,28 @@
       <%= render 'form', user: @user %>
     </div>
 
-    <div id="connections" class="user-form-group">
-      <h2>Connections</h2>
+    <%- if @devise_mapping.omniauthable? %>
+      <div id="connections" class="user-form-group">
+        <h2>Connections</h2>
 
-      <h3><%= image_tag 'github-logo.svg', alt: 'GitHub' %></h3>
-      <p>
-        With a GitHub connection, you can log in using your GitHub acccount.
-        In addition, it makes it possible to use repo commit message callouts.
-      </p>
+        <h3><%= image_tag 'github-logo.svg', alt: 'GitHub' %></h3>
+        <p>
+          With a GitHub connection, you can log in using your GitHub acccount.
+          In addition, it makes it possible to use repo commit message callouts.
+        </p>
 
-      <% if github_account.valid? %>
-        <%= render 'github_accounts/github_account',
-                   github_account: github_account %>
-      <% elsif can?(:create, github_account) %>
-        <%= link_to 'Connect GitHub',
-                    user_github_omniauth_authorize_path,
-                    method: :post,
-                    class: 'button button-outline' %>
-      <% else %>
-        <p><em>No connection yet</em></p>
-      <% end %>
-    </div>
+        <% if github_account.valid? %>
+          <%= render 'github_accounts/github_account',
+                     github_account: github_account %>
+        <% elsif can?(:create, github_account) %>
+          <%= link_to 'Connect GitHub',
+                      user_github_omniauth_authorize_path,
+                      method: :post,
+                      class: 'button button-outline' %>
+        <% else %>
+          <p><em>No connection yet</em></p>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>
