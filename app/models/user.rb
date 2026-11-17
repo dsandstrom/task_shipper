@@ -11,7 +11,7 @@ class User < ApplicationRecord # rubocop:disable Metrics/ClassLength
 
   VALID_EMPLOYEE_TYPES = %w[Admin Reviewer Worker Reporter].freeze
   ASSIGNABLE_EMPLOYEE_TYPES = %w[Reviewer Worker].freeze
-  NAME_DISALLOW_REGEX = %r{(https?:/|&#?\w+;|#{Unicode::Emoji::REGEX})}
+  NAME_DISALLOW_REGEX = %r{(https?:/|&#?\w+;|#{Unicode::Emoji::REGEX})}.freeze
 
   has_many :task_assignees, foreign_key: :assignee_id, inverse_of: :assignee,
                             dependent: :destroy
