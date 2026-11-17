@@ -42,7 +42,7 @@ yarn-debug.log*
 .yarn-integrity
 
 .env
-.env.*
+.env.*.local
 !.env.example
 
 /app/assets/builds/*
