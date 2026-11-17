@@ -1,76 +1,279 @@
-# frozen_string_literal: true
-
 require "rails_helper"
 
 RSpec.describe "users/edit", type: :view do
+  let(:devise_mapping) { Devise.mappings[:user] }
   let(:subject) { "users/edit" }
   let(:reporter) { Fabricate(:user_reporter) }
+
+  before do
+    assign(:devise_mapping, devise_mapping)
+  end
 
   context "for an admin" do
     let(:current_user) { Fabricate(:user_admin) }
 
-    before { enable_can(view, current_user) }
+    before do
+      enable_can(view, current_user)
+      assign(:devise_mapping, devise_mapping)
+    end
 
-    context "when editing a reporter" do
-      before { @user = assign(:user, reporter) }
+    context "while no omniauth providers" do
+      before do
+        allow(devise_mapping).to receive(:omniauthable?).and_return(false)
+      end
 
-      it "renders the edit user form" do
-        render
+      context "when editing a reporter" do
+        before { @user = assign(:user, reporter) }
 
-        assert_select "form[action=?][method=?]", user_path(@user), "post" do
-          assert_select "input[name=?]", "user[name]"
-          assert_select "input[name=?][disabled]", "user[email]"
-          assert_select "select[name=?]", "user[employee_type]", count: 0
+        it "renders the edit user form" do
+          render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered)
+            .to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_registration_path)
+        end
+
+        it "doesn't render new connection link" do
+          render
+
+          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
         end
       end
 
-      it "renders Advanced user links" do
-        render template: subject, layout: "layouts/application"
+      context "when editing themselves" do
+        before { @user = assign(:user, current_user) }
 
-        selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
-        expect(rendered).not_to have_selector(:css, selector)
-        expect(rendered)
-          .to have_link(nil, href: edit_user_employee_type_path(@user))
-        expect(rendered)
-          .not_to have_link(nil, href: edit_user_registration_path)
+        it "renders the edit user form" do
+          render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered).to have_link(nil, href: edit_user_registration_path)
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: new_user_employee_type_path(@user))
+        end
+
+        context "and they have a valid GithubAccount" do
+          before { @user.update github_id: 3562, github_username: "foo" }
+
+          let(:github_account) { @user.github_account }
+
+          it "doesn't render their GithubAccount" do
+            render
+            expect(rendered).not_to have_link(nil,
+                                              href: github_account.remote_url)
+            selector =
+              "a[href=\"#{github_account_url}\"][data-turbo-method='delete']"
+            expect(rendered).not_to have_selector(:css, selector)
+          end
+        end
+
+        context "when they don't have a valid GithubAccount" do
+          before { @user.update github_id: nil }
+
+          let(:github_account) { @user.github_account }
+
+          it "doesn't render new connection link" do
+            render
+            expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+          end
+        end
+      end
+
+      context "when editing a non-employee" do
+        let(:user) { Fabricate(:user_unemployed) }
+
+        before { @user = assign(:user, user) }
+
+        it "renders the edit user form" do
+          render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .to have_link(nil, href: new_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_registration_path)
+        end
+
+        it "doesn't render new connection link" do
+          render
+          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+        end
+      end
+
+      context "when editing a user with valid GithubAccount" do
+        let(:user) do
+          Fabricate(:user_reviewer, github_id: 4522,
+                                    github_username: "username")
+        end
+        let(:github_account) { user.github_account }
+
+        before { @user = assign(:user, user) }
+
+        it "doesn't render their GithubAccount" do
+          render
+          expect(rendered).not_to have_link(nil,
+                                            href: github_account.remote_url)
+          selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+        end
       end
     end
 
-    context "when editing themselves" do
-      before { @user = assign(:user, current_user) }
+    context "while a github omniauth provider" do
+      context "when editing a reporter" do
+        before { @user = assign(:user, reporter) }
 
-      it "renders the edit user form" do
-        render
+        it "renders the edit user form" do
+          render
 
-        assert_select "form[action=?][method=?]", user_path(@user), "post" do
-          assert_select "input[name=?]", "user[name]"
-          assert_select "input[name=?][disabled]", "user[email]"
-          assert_select "select[name=?]", "user[employee_type]", count: 0
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered)
+            .to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_registration_path)
+        end
+
+        it "doesn't render new connection link" do
+          render
+
+          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
         end
       end
 
-      it "renders Advanced user links" do
-        render template: subject, layout: "layouts/application"
+      context "when editing themselves" do
+        before { @user = assign(:user, current_user) }
 
-        selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
-        expect(rendered).not_to have_selector(:css, selector)
-        expect(rendered).to have_link(nil, href: edit_user_registration_path)
-        expect(rendered)
-          .not_to have_link(nil, href: edit_user_employee_type_path(@user))
-        expect(rendered)
-          .not_to have_link(nil, href: new_user_employee_type_path(@user))
+        it "renders the edit user form" do
+          render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered).to have_link(nil, href: edit_user_registration_path)
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: new_user_employee_type_path(@user))
+        end
+
+        context "when they have a valid GithubAccount" do
+          before { @user.update github_id: 3562, github_username: "foo" }
+
+          let(:github_account) { @user.github_account }
+
+          it "renders their GithubAccount" do
+            render
+            expect(rendered).to have_link(nil, href: github_account.remote_url)
+            selector =
+              "a[href=\"#{github_account_url}\"][data-turbo-method='delete']"
+            expect(rendered).to have_selector(:css, selector)
+          end
+
+          it "doesn't render new connection link" do
+            render
+            expect(rendered)
+              .not_to have_link(nil, href: "/auth/auth/github")
+          end
+        end
+
+        context "when they don't have a valid GithubAccount" do
+          before { @user.update github_id: nil }
+
+          let(:github_account) { @user.github_account }
+
+          it "renders new connection link" do
+            render
+            expect(rendered)
+              .to have_link(nil, href: user_github_omniauth_authorize_path)
+          end
+        end
       end
 
-      context "when they have a valid GithubAccount" do
-        before { @user.update github_id: 3562, github_username: "foo" }
+      context "when editing a non-employee" do
+        let(:user) { Fabricate(:user_unemployed) }
 
-        let(:github_account) { @user.github_account }
+        before { @user = assign(:user, user) }
 
-        it "renders their GithubAccount" do
+        it "renders the edit user form" do
           render
-          expect(rendered).to have_link(nil, href: github_account.remote_url)
-          selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
-          expect(rendered).to have_selector(:css, selector)
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user links" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .to have_link(nil, href: new_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: edit_user_registration_path)
         end
 
         it "doesn't render new connection link" do
@@ -80,67 +283,21 @@ RSpec.describe "users/edit", type: :view do
         end
       end
 
-      context "when they don't have a valid GithubAccount" do
-        before { @user.update github_id: nil }
+      context "when editing a user with valid GithubAccount" do
+        let(:user) do
+          Fabricate(:user_reviewer, github_id: 4522,
+                                    github_username: "username")
+        end
+        let(:github_account) { user.github_account }
 
-        let(:github_account) { @user.github_account }
+        before { @user = assign(:user, user) }
 
-        it "renders new connection link" do
+        it "renders their GithubAccount" do
           render
-          expect(rendered)
-            .to have_link(nil, href: user_github_omniauth_authorize_path)
+          expect(rendered).to have_link(nil, href: github_account.remote_url)
+          selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
         end
-      end
-    end
-
-    context "when editing a non-employee" do
-      let(:user) { Fabricate(:user_unemployed) }
-
-      before { @user = assign(:user, user) }
-
-      it "renders the edit user form" do
-        render
-
-        assert_select "form[action=?][method=?]", user_path(@user), "post" do
-          assert_select "input[name=?]", "user[name]"
-          assert_select "input[name=?][disabled]", "user[email]"
-          assert_select "select[name=?]", "user[employee_type]", count: 0
-        end
-      end
-
-      it "renders Advanced user links" do
-        render template: subject, layout: "layouts/application"
-
-        selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
-        expect(rendered).not_to have_selector(:css, selector)
-        expect(rendered)
-          .not_to have_link(nil, href: edit_user_employee_type_path(@user))
-        expect(rendered)
-          .to have_link(nil, href: new_user_employee_type_path(@user))
-        expect(rendered)
-          .not_to have_link(nil, href: edit_user_registration_path)
-      end
-
-      it "doesn't render new connection link" do
-        render
-        expect(rendered)
-          .not_to have_link(nil, href: user_github_omniauth_authorize_path)
-      end
-    end
-
-    context "when editing a user with valid GithubAccount" do
-      let(:user) do
-        Fabricate(:user_reviewer, github_id: 4522, github_username: "username")
-      end
-      let(:github_account) { user.github_account }
-
-      before { @user = assign(:user, user) }
-
-      it "renders their GithubAccount" do
-        render
-        expect(rendered).to have_link(nil, href: github_account.remote_url)
-        selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
-        expect(rendered).not_to have_selector(:css, selector)
       end
     end
   end
@@ -155,56 +312,111 @@ RSpec.describe "users/edit", type: :view do
         @user = assign(:user, current_user)
       end
 
-      it "renders the edit user form" do
-        render
-
-        assert_select "form[action=?][method=?]", user_path(@user), "post" do
-          assert_select "input[name=?]", "user[name]"
-          assert_select "input[name=?][disabled]", "user[email]"
-          assert_select "select[name=?]", "user[employee_type]", count: 0
-        end
-      end
-
-      it "renders Advanced user link" do
-        render template: subject, layout: "layouts/application"
-
-        selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
-        expect(rendered).not_to have_selector(:css, selector)
-        expect(rendered).to have_link(nil, href: edit_user_registration_path)
-        expect(rendered)
-          .not_to have_link(nil, href: edit_user_employee_type_path(@user))
-        expect(rendered)
-          .not_to have_link(nil, href: new_user_employee_type_path(@user))
-      end
-
-      context "when they have a valid GithubAccount" do
-        before { @user.update github_id: 3562, github_username: "foo" }
-
-        let(:github_account) { @user.github_account }
-
-        it "renders their GithubAccount" do
-          render
-          expect(rendered).to have_link(nil, href: github_account.remote_url)
-          selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
-          expect(rendered).to have_selector(:css, selector)
+      context "while no omniauth providers" do
+        before do
+          allow(devise_mapping).to receive(:omniauthable?).and_return(false)
         end
 
-        it "doesn't render new connection link" do
+        it "renders the edit user form" do
           render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user link" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered).to have_link(nil, href: edit_user_registration_path)
           expect(rendered)
-            .not_to have_link(nil, href: user_github_omniauth_authorize_path)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: new_user_employee_type_path(@user))
+        end
+
+        context "when they have a valid GithubAccount" do
+          before { @user.update github_id: 3562, github_username: "foo" }
+
+          let(:github_account) { @user.github_account }
+
+          it "doesn't render their GithubAccount" do
+            render
+            expect(rendered)
+              .not_to have_link(nil, href: github_account.remote_url)
+            selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
+            expect(rendered).not_to have_selector(:css, selector)
+          end
+        end
+
+        context "when they don't have a valid GithubAccount" do
+          before { @user.update github_id: nil }
+
+          let(:github_account) { @user.github_account }
+
+          it "doesn't render new connection link" do
+            render
+            expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+          end
         end
       end
 
-      context "when they don't have a valid GithubAccount" do
-        before { @user.update github_id: nil }
-
-        let(:github_account) { @user.github_account }
-
-        it "renders new connection link" do
+      context "while a github omniauth provider" do
+        it "renders the edit user form" do
           render
+
+          assert_select "form[action=?][method=?]", user_path(@user), "post" do
+            assert_select "input[name=?]", "user[name]"
+            assert_select "input[name=?][disabled]", "user[email]"
+            assert_select "select[name=?]", "user[employee_type]", count: 0
+          end
+        end
+
+        it "renders Advanced user link" do
+          render template: subject, layout: "layouts/application"
+
+          selector = "a[href=\"#{user_path(@user)}\"][data-method='delete']"
+          expect(rendered).not_to have_selector(:css, selector)
+          expect(rendered).to have_link(nil, href: edit_user_registration_path)
           expect(rendered)
-            .to have_link(nil, href: user_github_omniauth_authorize_path)
+            .not_to have_link(nil, href: edit_user_employee_type_path(@user))
+          expect(rendered)
+            .not_to have_link(nil, href: new_user_employee_type_path(@user))
+        end
+
+        context "when they have a valid GithubAccount" do
+          before { @user.update github_id: 3562, github_username: "foo" }
+
+          let(:github_account) { @user.github_account }
+
+          it "renders their GithubAccount" do
+            render
+            expect(rendered).to have_link(nil, href: github_account.remote_url)
+            selector = "a[href=\"#{github_account_url}\"][data-method='delete']"
+            expect(rendered).to have_selector(:css, selector)
+          end
+
+          it "doesn't render new connection link" do
+            render
+            expect(rendered)
+              .not_to have_link(nil, href: user_github_omniauth_authorize_path)
+          end
+        end
+
+        context "when they don't have a valid GithubAccount" do
+          before { @user.update github_id: nil }
+
+          let(:github_account) { @user.github_account }
+
+          it "renders new connection link" do
+            render
+            expect(rendered)
+              .to have_link(nil, href: user_github_omniauth_authorize_path)
+          end
         end
       end
     end
