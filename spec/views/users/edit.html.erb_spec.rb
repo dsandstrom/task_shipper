@@ -46,10 +46,10 @@ RSpec.describe "users/edit", type: :view do
             .not_to have_link(nil, href: edit_user_registration_path)
         end
 
-        it "doesn't render new connection link" do
+        it "doesn't render new connection button" do
           render
 
-          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+          assert_select "form[action=?]", "/auth/auth/github", count: 0
         end
       end
 
@@ -98,9 +98,10 @@ RSpec.describe "users/edit", type: :view do
 
           let(:github_account) { @user.github_account }
 
-          it "doesn't render new connection link" do
+          it "doesn't render new connection button" do
             render
-            expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+
+            assert_select "form[action=?]", "/auth/auth/github", count: 0
           end
         end
       end
@@ -133,9 +134,10 @@ RSpec.describe "users/edit", type: :view do
             .not_to have_link(nil, href: edit_user_registration_path)
         end
 
-        it "doesn't render new connection link" do
+        it "doesn't render new connection button" do
           render
-          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+
+          assert_select "form[action=?]", "/auth/auth/github", count: 0
         end
       end
 
@@ -183,10 +185,10 @@ RSpec.describe "users/edit", type: :view do
             .not_to have_link(nil, href: edit_user_registration_path)
         end
 
-        it "doesn't render new connection link" do
+        it "doesn't render new connection button" do
           render
 
-          expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+          assert_select "form[action=?]", "/auth/auth/github", count: 0
         end
       end
 
@@ -228,10 +230,10 @@ RSpec.describe "users/edit", type: :view do
             expect(rendered).to have_selector(:css, selector)
           end
 
-          it "doesn't render new connection link" do
+          it "doesn't render new connection button" do
             render
-            expect(rendered)
-              .not_to have_link(nil, href: "/auth/auth/github")
+
+            assert_select "form[action=?]", "/auth/auth/github", count: 0
           end
         end
 
@@ -240,10 +242,10 @@ RSpec.describe "users/edit", type: :view do
 
           let(:github_account) { @user.github_account }
 
-          it "renders new connection link" do
+          it "renders new connection button" do
             render
-            expect(rendered)
-              .to have_link(nil, href: user_github_omniauth_authorize_path)
+            assert_select "form[method=post][action=?]",
+                          user_github_omniauth_authorize_path
           end
         end
       end
@@ -276,10 +278,10 @@ RSpec.describe "users/edit", type: :view do
             .not_to have_link(nil, href: edit_user_registration_path)
         end
 
-        it "doesn't render new connection link" do
+        it "doesn't render new connection button" do
           render
-          expect(rendered)
-            .not_to have_link(nil, href: user_github_omniauth_authorize_path)
+
+          assert_select "form[action=?]", "/auth/auth/github", count: 0
         end
       end
 
@@ -358,9 +360,10 @@ RSpec.describe "users/edit", type: :view do
 
           let(:github_account) { @user.github_account }
 
-          it "doesn't render new connection link" do
+          it "doesn't render new connection button" do
             render
-            expect(rendered).not_to have_link(nil, href: "/auth/auth/github")
+
+            assert_select "form[action=?]", "/auth/auth/github", count: 0
           end
         end
       end
@@ -400,10 +403,10 @@ RSpec.describe "users/edit", type: :view do
             expect(rendered).to have_selector(:css, selector)
           end
 
-          it "doesn't render new connection link" do
+          it "doesn't render new connection button" do
             render
-            expect(rendered)
-              .not_to have_link(nil, href: user_github_omniauth_authorize_path)
+
+            assert_select "form[action=?]", "/auth/auth/github", count: 0
           end
         end
 
@@ -412,10 +415,10 @@ RSpec.describe "users/edit", type: :view do
 
           let(:github_account) { @user.github_account }
 
-          it "renders new connection link" do
+          it "renders new connection button" do
             render
-            expect(rendered)
-              .to have_link(nil, href: user_github_omniauth_authorize_path)
+            assert_select "form[method=post][action=?]",
+                          user_github_omniauth_authorize_path
           end
         end
       end
