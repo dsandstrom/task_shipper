@@ -27,7 +27,8 @@
           <%= link_to 'Connect GitHub',
                       user_github_omniauth_authorize_path,
                       method: :post,
-                      class: 'button button-outline' %>
+                      class: 'button button-outline',
+                      data: { turbo_method: :post } %>
         <% else %>
           <p><em>No connection yet</em></p>
         <% end %>
