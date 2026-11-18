@@ -101,9 +101,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_015811) do
     t.boolean "closed", default: false, null: false
     t.datetime "created_at", precision: nil, null: false
     t.text "description"
-    t.string "github_id"
+    t.float "github_id", limit: 24
     t.integer "github_number"
-    t.string "github_repo_id"
+    t.float "github_repo_id", limit: 24
     t.string "github_url"
     t.integer "github_user_id"
     t.integer "issue_type_id"
