@@ -233,8 +233,8 @@ RSpec.describe Api::V1::WebhooksController, type: :controller do
             expect(issue).not_to be_nil
             expect(issue.summary).to eq("New Issue API Test")
             expect(issue.description).to eq("Testing api")
-            expect(issue.github_id).to eq("1234")
-            expect(issue.github_repo_id).to eq("543")
+            expect(issue.github_id).to eq(1234)
+            expect(issue.github_repo_id).to eq(543)
             expect(issue.github_number).to eq(2)
             expect(issue.status).to eq("pending")
           end
