@@ -414,8 +414,8 @@ RSpec.describe Api::V1::WebhooksController, type: :controller do
 
         context "and issue has a large id" do
           before do
-            issue_open_params["issue"]["id"] = 7438236018
-            issue_open_params["repository"]["id"] = 9437234128
+            issue_open_params["issue"]["id"] = 7_438_236_018
+            issue_open_params["repository"]["id"] = 9_437_234_128
             code = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"),
                                            github_secret,
                                            issue_open_params.to_query)
