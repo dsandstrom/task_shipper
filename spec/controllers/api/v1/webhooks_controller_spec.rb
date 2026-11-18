@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Api::V1::WebhooksController, type: :controller do
   let(:task) { Fabricate(:task) }
   let(:commit_user) do
-    Fabricate(:user_worker, github_id: 4321, github_username: "login")
+    Fabricate(:user_worker, github_id: 4321, github_username: "testname")
   end
 
   describe "POST #github" do
@@ -411,6 +411,28 @@ RSpec.describe Api::V1::WebhooksController, type: :controller do
             expect(response).to be_successful
           end
         end
+
+        context "and issue has a large id" do
+          before do
+            issue_open_params["issue"]["id"] = 7_438_236_018
+            issue_open_params["repository"]["id"] = 9_437_234_128
+            code = OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new("sha256"),
+                                           github_secret,
+                                           issue_open_params.to_query)
+            request.env["HTTP_X_HUB_SIGNATURE_256"] = "sha256=#{code}"
+          end
+
+          it "still creates a new issue" do
+            expect do
+              post :github, params: issue_open_params
+            end.to change(Issue, :count).by(1)
+          end
+
+          it "returns an success response" do
+            post :github, params: issue_open_params
+            expect(response).to be_successful
+          end
+        end
       end
 
       context "for a commit" do
@@ -437,11 +459,12 @@ RSpec.describe Api::V1::WebhooksController, type: :controller do
         context "and user doesn't exist" do
           before { commit_user.destroy }
 
-          # it "creates a new user" do
-          #   expect do
-          #     post :github, params: commit_push_params
-          #   end.to change(User, :count).by(1)
-          # end
+          # payload don't send id
+          it "doesn't create a new user" do
+            expect do
+              post :github, params: commit_push_params
+            end.not_to change(User, :count)
+          end
 
           it "returns a success response" do
             post :github, params: commit_push_params
