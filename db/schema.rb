@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_18_015811) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_235535) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -101,9 +101,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_18_015811) do
     t.boolean "closed", default: false, null: false
     t.datetime "created_at", precision: nil, null: false
     t.text "description"
-    t.float "github_id", limit: 24
+    t.bigint "github_id"
     t.integer "github_number"
-    t.float "github_repo_id", limit: 24
+    t.bigint "github_repo_id"
     t.string "github_url"
     t.integer "github_user_id"
     t.integer "issue_type_id"
